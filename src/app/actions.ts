@@ -4,6 +4,7 @@ import { xai } from '@ai-sdk/xai';
 import { generateText } from 'ai';
 import fs from 'fs';
 import path from 'path';
+import { IAnalysisResult } from './app';
 
 export interface AnalyzeImageRequest {
     metadatas: {
@@ -16,6 +17,7 @@ export interface AnalyzeImageRequest {
 
 export interface AnalyzeImageResponse {
     text: string;
+    json: IAnalysisResult;
 }
 
 export async function analyzeImage(params: AnalyzeImageRequest): Promise<AnalyzeImageResponse> {
@@ -40,6 +42,9 @@ export async function analyzeImage(params: AnalyzeImageRequest): Promise<Analyze
                 { type: 'image', image: params.metadatas?.imageUrl },
                 { text: 'Analyze this chart', type: 'text' },
             ],
+            responseFormat: {
+                type: 'json_object',
+            }
         },
     ];
 
@@ -62,5 +67,18 @@ export async function analyzeImage(params: AnalyzeImageRequest): Promise<Analyze
 
     //   console.log(result.text);
     //   return result.text;
-    return { text: messages.map(msg => JSON.stringify(msg)).join('\n') };
+    // return { text: messages.map(msg => JSON.stringify(msg)).join('\n') };
+    return {
+        text: '',
+        json: {
+            tradeDirection: 'LONG',
+            confidence: 0.85,
+            rationale: 'The chart shows a strong uptrend with higher highs and higher lows, indicating bullish momentum.',
+            stopLoss: 1.2000,
+            takeProfit: 1.2500,
+            keySupportResistanceLevels: [1.2100, 1.2200, 1.2300],
+            winratePercentage: 75,
+            riskRewardRatio: [1, 2],
+        }
+    }
 }

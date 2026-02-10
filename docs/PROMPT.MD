@@ -9,7 +9,9 @@ Analyze the chart and provide:
 6. Winrate percentage.
 
 Account balance: $${accountBalance} USD
-Current date: Monday, Feb 10th, 2026
+Current date: ${date}
 Market: OPEN
 
-Be direct and specific. Provide exact price levels and position sizing based on proper risk management (max 2% risk per trade).
+Be direct and specific. Provide exact price levels and position sizing based on proper risk management (max ${riskPerTrade}$% risk per trade).
+
+Respond in JSON format : tradeDirection (LONG / SHORT), confidence(number, between 0 & 1), rationale (string, Explanation of the analysis), stopLoss(number), takeProfit(number), keySupportResistanceLevels (array of numbers), winratePercentage(number), riskRewardRatio(array of number)

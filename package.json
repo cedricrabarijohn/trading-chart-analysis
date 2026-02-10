@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@ai-sdk/xai": "^3.0.50",
+    "@chakra-ui/react": "^3.32.0",
+    "@emotion/react": "^11.14.0",
     "ai": "^6.0.78",
     "next": "16.1.6",
     "react": "19.2.3",

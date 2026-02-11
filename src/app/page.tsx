@@ -13,6 +13,8 @@ import { NativeSelectRoot, NativeSelectField } from "@/components/ui/native-sele
 import { Button } from '@/components/ui/button';
 import { analyseChartDatas } from './actions';
 import { TWELVE_MOCK_DATAS } from './globals/mocks/twelve-mock-data';
+import { XAI_MOCK_DATAS } from './globals/mocks/xai-mock-datas';
+import { IAnalysisResult } from './app';
 
 const SYMBOLS = [
   { value: 'GBP/JPY', label: 'GBP/JPY', type: 'forex' },
@@ -22,12 +24,12 @@ const SYMBOLS = [
 ];
 
 const TIMEFRAMES = [
-  { value: '1min', label: '1 Minute', crypto: '1m' },
-  { value: '5min', label: '5 Minutes', crypto: '5m' },
-  { value: '15min', label: '15 Minutes', crypto: '15m' },
-  { value: '1h', label: '1 Hour', crypto: '1h' },
-  { value: '4h', label: '4 Hours', crypto: '4h' },
-  { value: '1day', label: '1 Day', crypto: '1d' },
+  { value: '1min', label: '1 Minute' },
+  { value: '5min', label: '5 Minutes' },
+  { value: '15min', label: '15 Minutes' },
+  { value: '1h', label: '1 Hour' },
+  { value: '4h', label: '4 Hours' },
+  { value: '1day', label: '1 Day' },
 ];
 
 // Get your free API key from: https://twelvedata.com/
@@ -40,6 +42,7 @@ export default function Home() {
   const [timeframe, setTimeframe] = useState('15min');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<IAnalysisResult | null>(XAI_MOCK_DATAS.json as any);
 
   const fetchForexData = async (sym: string, tf: string) => {
     const data = TWELVE_MOCK_DATAS as any;
@@ -187,10 +190,10 @@ export default function Home() {
   // };
 
   return (
-    <Box minH="100vh" bg="gray.900" py={8} px={4}>
-      <Container maxW="container.xl">
+    <Box minH="100vh" bg="gray.900" py={8} px={10} display={'flex'} justifyContent={'center'}>
+      <Container maxW="xl">
         <VStack gap={6} align="stretch">
-          <HStack gap={4} justify="center">
+          <HStack gap={4} justify="center" flexWrap={'wrap'}>
             <NativeSelectRoot width="200px">
               <NativeSelectField
                 value={symbol}
@@ -239,14 +242,28 @@ export default function Home() {
             </Box>
           )}
 
-          <Box
+          {/* <Box
             id="chart-container"
             bg="gray.800"
             borderRadius="lg"
             position="relative"
             opacity={loading ? 0.5 : 1}
             transition="opacity 0.2s"
-          />
+          /> */}
+
+          {analysisResult && (
+            <VStack className='analysis-results' display={'flex'} alignItems={'start'}>
+              <HStack>
+                <Box borderRadius="md" width="100%">
+                  <Text color="white" fontSize="lg" fontWeight="bold" mb={2}>
+                    Analysis Result
+                  </Text>
+                </Box>
+              </HStack>
+              <HStack justifyContent={'start'}>
+              </HStack>
+            </VStack>
+          )}
         </VStack>
       </Container>
     </Box>

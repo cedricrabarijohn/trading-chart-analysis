@@ -17,7 +17,7 @@ export interface AnalyzeChartDatasRequest {
 
 export interface AnalyzeChartDatasResponse {
     text: string;
-    // json: IAnalysisResult;
+    json?: IAnalysisResult;
 }
 
 export async function analyseChartDatas(params: AnalyzeChartDatasRequest): Promise<AnalyzeChartDatasResponse> {
@@ -60,9 +60,21 @@ ${chartDatas ? `Here are the chart datas: ${JSON.stringify(chartDatas)}` : 'No c
         ],
     });
 
-    console.log('AI Response:', result);
+    const jsonResult = result.text.match(/{[\s\S]*}/);
+    if (jsonResult) {
+        try {
+            const analysisResult: IAnalysisResult = JSON.parse(jsonResult[0]);
+            // You can log or process the analysisResult as needed
+            console.log('Parsed Analysis Result:', analysisResult);
+        } catch (error) {
+            console.error('Error parsing JSON from result:', error);
+        }
+    } else {
+        console.warn('No JSON result found in the response text.');
+    }
 
     return {
         text: result.text,
+        json: jsonResult ? JSON.parse(jsonResult[0]) : undefined,
     }
 }

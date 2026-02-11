@@ -1,267 +1,185 @@
 'use client';
 
-import { useState } from "react";
+import { CandlestickSeries, createChart, ISeriesApi } from 'lightweight-charts';
+import { useEffect, useRef, useState } from "react";
 import {
   Box,
   Container,
   VStack,
-  Heading,
-  Text,
-  SimpleGrid,
-  Flex,
   HStack,
-  Alert,
-  Input,
-  Image
+  Text,
 } from "@chakra-ui/react";
-import { analyzeImage } from "./actions";
-import { IAnalysisResult } from "./app";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { NativeSelectRoot, NativeSelectField } from "@/components/ui/native-select";
+
+const SYMBOLS = [
+  { value: 'GBP/JPY', label: 'GBP/JPY', type: 'forex' },
+  { value: 'EUR/USD', label: 'EUR/USD', type: 'forex' },
+  { value: 'USD/JPY', label: 'USD/JPY', type: 'forex' },
+  { value: 'GBP/USD', label: 'GBP/USD', type: 'forex' },
+];
+
+const TIMEFRAMES = [
+  { value: '1min', label: '1 Minute', crypto: '1m' },
+  { value: '5min', label: '5 Minutes', crypto: '5m' },
+  { value: '15min', label: '15 Minutes', crypto: '15m' },
+  { value: '1h', label: '1 Hour', crypto: '1h' },
+  { value: '4h', label: '4 Hours', crypto: '4h' },
+  { value: '1day', label: '1 Day', crypto: '1d' },
+];
+
+// Get your free API key from: https://twelvedata.com/
+const TWELVE_DATA_API_KEY = 'b975cb65b1c84a1c82bb0ec9e94eabaa'; // Replace with your API key
 
 export default function Home() {
-  const [analysisResult, setAnalysisResult] = useState<IAnalysisResult | null>(null);
+  const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const chartRef = useRef<any>(null);
+  const [symbol, setSymbol] = useState('GBP/JPY');
+  const [timeframe, setTimeframe] = useState('15min');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-      setAnalysisResult(null);
-      setError('');
+  const fetchForexData = async (sym: string, tf: string) => {
+    const response = await fetch(
+      `https://api.twelvedata.com/time_series?symbol=${sym}&interval=${tf}&outputsize=100&apikey=${TWELVE_DATA_API_KEY}`
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch forex data');
     }
+    
+    const data = await response.json();
+    
+    if (data.status === 'error') {
+      throw new Error(data.message || 'Failed to fetch forex data');
+    }
+    
+    if (!data.values || data.values.length === 0) {
+      throw new Error('No data available for this forex pair');
+    }
+    
+    // Twelve Data returns data in reverse chronological order, so we reverse it
+    return data.values.reverse().map((d: any) => ({
+      time: new Date(d.datetime).getTime() / 1000,
+      open: parseFloat(d.open),
+      high: parseFloat(d.high),
+      low: parseFloat(d.low),
+      close: parseFloat(d.close),
+    }));
   };
 
-  const handleAnalyze = async () => {
-    if (!selectedFile) {
-      setError('Please select a chart image first');
-      return;
-    }
-
+  const fetchChartData = async (sym: string, tf: string) => {
     setLoading(true);
-    setError('');
+    setError(null);
     try {
-      // Convert file to base64 data URL
-      const reader = new FileReader();
-      const fileDataUrl = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(selectedFile);
-      });
-
-      const resp = await analyzeImage({
-        metadatas: {
-          imageUrl: fileDataUrl,
-          accountBalance: 1000,
-          symbol: 'GBP/JPY',
-          timeframe: '15m',
-        }
-      });
-      setAnalysisResult(resp.json);
-    } catch (error) {
-      console.error('Error:', error);
-      setError('Failed to analyze chart. Please try again.');
+      const symbolData = SYMBOLS.find(s => s.value === sym);
+      let chartData;
+      
+      if (symbolData?.type === 'forex') {
+        chartData = await fetchForexData(sym, tf);
+      }
+      
+      if (candlestickSeriesRef.current) {
+        candlestickSeriesRef.current.setData(chartData);
+      }
+    } catch (err) {
+      console.error('Error fetching chart data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load chart data');
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const chartContainer = document.getElementById('chart-container');
+    if (!chartContainer) return;
+
+    const chart = createChart(chartContainer, {
+      width: chartContainer.clientWidth,
+      height: 600,
+    });
+    
+    const candlestickSeries = chart.addSeries(CandlestickSeries, {
+      upColor: '#26a69a',
+      downColor: '#ef5350',
+      borderVisible: false,
+      wickUpColor: '#26a69a',
+      wickDownColor: '#ef5350',
+    });
+
+    chartRef.current = chart;
+    candlestickSeriesRef.current = candlestickSeries;
+
+    const handleResize = () => {
+      chart.applyOptions({ width: chartContainer.clientWidth });
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      chart.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    fetchChartData(symbol, timeframe);
+  }, [symbol, timeframe]);
+
   return (
-    <Box minH="100vh" bg="gray.900" py={16} px={16} justifyContent={'center'} display={'flex'}>
+    <Box minH="100vh" bg="gray.900" py={8} px={4}>
       <Container maxW="container.xl">
-        <VStack gap={8} align="stretch">
-          {/* Header */}
-          <VStack gap={2} textAlign="center">
-            <Heading
-              size="2xl"
-              bgGradient="linear(to-r, purple.400, purple.600)"
-              bgClip="text"
-            >
-              Chart Analysis
-            </Heading>
-            <Text fontSize="lg" color="gray.400">
-              AI-Powered Trading Analysis
-            </Text>
-          </VStack>
-
-          {/* File Input */}
-          <Card>
-            <VStack gap={4} align="stretch">
-              <Text fontWeight="semibold" color="gray.300">
-                Upload Chart Image
-              </Text>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                p={2}
-                border="2px dashed"
+        <VStack gap={6} align="stretch">
+          <HStack gap={4} justify="center">
+            <NativeSelectRoot width="200px">
+              <NativeSelectField
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                bg="gray.800"
+                color="white"
                 borderColor="gray.600"
-                _hover={{ borderColor: "purple.500" }}
-                cursor="pointer"
-              />
-              {previewUrl && (
-                <Box mt={4}>
-                  <Image
-                    src={previewUrl}
-                    alt="Chart preview"
-                    maxH="400px"
-                    objectFit="contain"
-                    borderRadius="md"
-                    mx="auto"
-                  />
-                </Box>
-              )}
-            </VStack>
-          </Card>
-
-          {/* Analyze Button */}
-          <Button 
-            w="full"
-            onClick={handleAnalyze} 
-            loading={loading}
-            disabled={!selectedFile}
-          >
-            {loading ? 'Analyzing...' : 'Analyze Chart'}
-          </Button>
-
-          {/* Error Alert */}
-          {error && (
-            <Alert.Root status="error" borderRadius="xl">
-              <Alert.Indicator />
-              <Alert.Title>{error}</Alert.Title>
-            </Alert.Root>
-          )}
-
-          {/* Results */}
-          {analysisResult && (
-            <SimpleGrid columns={{ base: 1, lg: 2 }} gap={6}>
-              {/* Trade Signal Card */}
-              <Card
-                gridColumn={{ base: 1, lg: "1 / -1" }}
-                borderWidth="2px"
-                borderColor={analysisResult.tradeDirection === 'LONG' ? 'green.500' : 'red.500'}
-                bgGradient={
-                  analysisResult.tradeDirection === 'LONG'
-                    ? 'linear(to-br, green.900/20, gray.800)'
-                    : 'linear(to-br, red.900/20, gray.800)'
-                }
+                padding={'2px 2px 2px 10px'}
               >
-                <Flex justify="space-between" align="center" mb={5}>
-                  <Heading size="lg">Trade Signal</Heading>
-                  <Badge
-                    colorScheme={analysisResult.tradeDirection === 'LONG' ? 'green' : 'red'}
-                  >
-                    {analysisResult.tradeDirection}
-                  </Badge>
-                </Flex>
-                <VStack align="stretch" gap={2}>
-                  <Text fontSize="sm" color="gray.400">
-                    Confidence: {(analysisResult.confidence * 100).toFixed(0)}%
-                  </Text>
-                  <Progress value={analysisResult.confidence * 100} />
-                </VStack>
-              </Card>
+                {SYMBOLS.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </NativeSelectField>
+            </NativeSelectRoot>
 
-              {/* Price Levels Card */}
-              <Card>
-                <Heading size="lg" mb={4}>Price Levels</Heading>
-                <SimpleGrid columns={analysisResult.entryPrice ? 3 : 2} gap={4}>
-                  {analysisResult.entryPrice && (
-                    <VStack align="start" gap={2}>
-                      <Text fontSize="sm" color="gray.400" textTransform="uppercase">
-                        Entry Price
-                      </Text>
-                      <Text fontSize="2xl" fontWeight="bold" color="blue.400">
-                        {analysisResult.entryPrice.toFixed(3)}
-                      </Text>
-                    </VStack>
-                  )}
-                  {analysisResult.takeProfit && (
-                    <VStack align="start" gap={2}>
-                      <Text fontSize="sm" color="gray.400" textTransform="uppercase">
-                        Take Profit
-                      </Text>
-                      <Text fontSize="2xl" fontWeight="bold" color="green.400">
-                        {analysisResult.takeProfit.toFixed(3)}
-                      </Text>
-                    </VStack>
-                  )}
-                  {analysisResult.stopLoss && (
-                    <VStack align="start" gap={2}>
-                      <Text fontSize="sm" color="gray.400" textTransform="uppercase">
-                        Stop Loss
-                      </Text>
-                      <Text fontSize="2xl" fontWeight="bold" color="red.400">
-                        {analysisResult.stopLoss.toFixed(3)}
-                      </Text>
-                    </VStack>
-                  )}
-                </SimpleGrid>
-              </Card>
+            <NativeSelectRoot width="200px">
+              <NativeSelectField
+                value={timeframe}
+                onChange={(e) => setTimeframe(e.target.value)}
+                bg="gray.800"
+                color="white"
+                borderColor="gray.600"
+                padding={'2px 2px 2px 10px'}
+              >
+                {TIMEFRAMES.map((tf) => (
+                  <option key={tf.value} value={tf.value}>
+                    {tf.label}
+                  </option>
+                ))}
+              </NativeSelectField>
+            </NativeSelectRoot>
+          </HStack>
 
-              {/* Metrics Card */}
-              <Card>
-                <Heading size="lg" mb={4}>Metrics</Heading>
-                <SimpleGrid columns={2} gap={4}>
-                  {analysisResult.riskRewardRatio && (
-                    <VStack align="start" gap={2}>
-                      <Text fontSize="sm" color="gray.400" textTransform="uppercase">
-                        Risk/Reward
-                      </Text>
-                      <Text fontSize="xl" fontWeight="bold" color="blue.400">
-                        {analysisResult.riskRewardRatio.join(':')}
-                      </Text>
-                    </VStack>
-                  )}
-                  {analysisResult.winratePercentage && (
-                    <VStack align="start" gap={2}>
-                      <Text fontSize="sm" color="gray.400" textTransform="uppercase">
-                        Win Rate
-                      </Text>
-                      <Text fontSize="xl" fontWeight="bold" color="blue.400">
-                        {analysisResult.winratePercentage.toFixed(0)}%
-                      </Text>
-                    </VStack>
-                  )}
-                </SimpleGrid>
-              </Card>
-
-              {/* Key Levels Card */}
-              {analysisResult.keySupportResistanceLevels && analysisResult.keySupportResistanceLevels.length > 0 && (
-                <Card gridColumn={{ base: 1, lg: "1 / -1" }}>
-                  <Heading size="lg" mb={4}>Key Levels</Heading>
-                  <HStack gap={2} flexWrap="wrap">
-                    {analysisResult.keySupportResistanceLevels.map((level, index) => (
-                      <Badge
-                        key={index}
-                        colorScheme="blue"
-                        px={4}
-                        py={2}
-                      >
-                        {level.toFixed(3)}
-                      </Badge>
-                    ))}
-                  </HStack>
-                </Card>
-              )}
-
-              {/* Analysis Card */}
-              <Card gridColumn={{ base: 1, lg: "1 / -1" }}>
-                <Heading size="lg" mb={4}>Analysis</Heading>
-                <Text color="gray.300" lineHeight="1.7" whiteSpace="pre-wrap">
-                  {analysisResult.rationale}
-                </Text>
-              </Card>
-            </SimpleGrid>
+          {error && (
+            <Box bg="red.900" color="red.200" p={4} borderRadius="md">
+              <Text>{error}</Text>
+            </Box>
           )}
+
+          <Box
+            id="chart-container"
+            bg="gray.800"
+            borderRadius="lg"
+            position="relative"
+            opacity={loading ? 0.5 : 1}
+            transition="opacity 0.2s"
+          />
         </VStack>
       </Container>
     </Box>

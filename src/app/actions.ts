@@ -65,17 +65,6 @@ IMPORTANT:
         ],
     });
 
-    console.log('Prompt text', promptWithContext);
-    console.log('Prompt messages:', [
-        {
-            role: 'user',
-            content: [
-                { type: 'image', image: params.metadatas?.imageUrl },
-                { text: promptWithContext, type: 'text' },
-            ],
-        },
-    ]);
-
     console.log('AI Response:', result.text);
 
     return {

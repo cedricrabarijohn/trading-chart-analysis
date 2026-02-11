@@ -1,5 +1,6 @@
 export interface IAnalysisResult {
     tradeDirection: 'LONG' | 'SHORT';
+    entryPrice?: number; // Entry price for the trade
     confidence: number; // 0 to 1
     rationale: string; // Explanation of the analysis
     stopLoss?: number; // Optional stop loss level

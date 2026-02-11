@@ -29,49 +29,60 @@ export async function analyzeImage(params: AnalyzeImageRequest): Promise<Analyze
     const timeframe = params.metadatas?.timeframe || defaultTimeFrame;
     const symbol = params.metadatas?.symbol || 'Unknown Symbol';
     const accountBalance = params.metadatas?.accountBalance || 0;
-    const promptWithContext = promptText.replace('${timeframe}', timeframe).replace('${symbol}', symbol).replace('${accountBalance}', accountBalance.toString());
+    const date = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const riskPerTrade = 2;
+    
+    const promptWithContext = promptText
+        .replace('${timeframe}', timeframe)
+        .replace('${symbol}', symbol)
+        .replace('${accountBalance}', accountBalance.toString())
+        .replace('${date}', date)
+        .replace('${riskPerTrade}', riskPerTrade.toString());
+    
+    // Log image data info for debugging
+    console.log('Image data start:', params.metadatas?.imageUrl?.substring(0, 100));
+    console.log('Image data length:', params.metadatas?.imageUrl?.length);
 
-    const messages = [
-        {
-            role: 'system',
-            content: promptWithContext,
-        },
+    const result = await generateText({
+        model: xai.responses('grok-4-1-fast-reasoning'),
+        messages: [
+            {
+                role: 'user',
+                content: [
+                    { type: 'image', image: params.metadatas?.imageUrl },
+                    { 
+                        text: `CRITICAL: You must analyze the ACTUAL image I'm sending you. Read the exact current price from the chart display.
+${promptWithContext}
+
+IMPORTANT: 
+- First, identify the EXACT current price shown on the chart (look at price labels on the right side)
+- Do not make up prices - use only what you see in the actual chart
+- Verify your prices match the chart before responding`, 
+                        type: 'text' 
+                    },
+                ],
+            },
+        ],
+    });
+
+    console.log('Prompt text', promptWithContext);
+    console.log('Prompt messages:', [
         {
             role: 'user',
             content: [
                 { type: 'image', image: params.metadatas?.imageUrl },
-                { text: 'Analyze this chart', type: 'text' },
+                { text: promptWithContext, type: 'text' },
             ],
-            responseFormat: {
-                type: 'json_object',
-            }
         },
-    ];
+    ]);
 
-    //   const result = await generateText({
-    //     model: xai.responses('grok-4-1-fast-non-reasoning'),
-    //     messages: [
-    //       {
-    //         role: 'system',
-    //         content: promptText,
-    //       },
-    //       {
-    //         role: 'user',
-    //         content: [
-    //           { type: 'image', image: imageUrl },
-    //           { text: 'Analyze this chart', type: 'text' },
-    //         ],
-    //       },
-    //     ],
-    //   });
+    console.log('AI Response:', result.text);
 
-    //   console.log(result.text);
-    //   return result.text;
-    // return { text: messages.map(msg => JSON.stringify(msg)).join('\n') };
     return {
         text: '',
-        json: {
+        json: result.text ? JSON.parse(result.text) : {
             tradeDirection: 'LONG',
+            entryPrice: 1.2150,
             confidence: 0.85,
             rationale: 'The chart shows a strong uptrend with higher highs and higher lows, indicating bullish momentum.',
             stopLoss: 1.2000,
@@ -79,6 +90,6 @@ export async function analyzeImage(params: AnalyzeImageRequest): Promise<Analyze
             keySupportResistanceLevels: [1.2100, 1.2200, 1.2300],
             winratePercentage: 75,
             riskRewardRatio: [1, 2],
-        }
+        },
     }
 }

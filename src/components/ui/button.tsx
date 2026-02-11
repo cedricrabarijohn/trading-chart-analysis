@@ -12,7 +12,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>((props, ref) =>
   return (
     <ChakraButton
       ref={ref}
-      size="lg"
+      size="md"
       colorScheme="purple"
       borderRadius="xl"
       fontWeight="semibold"
@@ -22,6 +22,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>((props, ref) =>
         transform: 'translateY(-2px)',
         boxShadow: 'lg',
       }}
+      padding={'0 10px 0 10px'}
       {...rest}
     >
       {loading && <Spinner size="sm" mr={2} />}

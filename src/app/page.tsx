@@ -1,6 +1,6 @@
 'use client';
 
-import { CandlestickSeries, createChart, ISeriesApi } from 'lightweight-charts';
+import { CandlestickSeries, createChart, IChartApi, ISeriesApi } from 'lightweight-charts';
 import { useEffect, useRef, useState } from "react";
 import {
   Box,
@@ -10,6 +10,9 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { NativeSelectRoot, NativeSelectField } from "@/components/ui/native-select";
+import { Button } from '@/components/ui/button';
+import { analyseChartDatas } from './actions';
+import { TWELVE_MOCK_DATAS } from './globals/mocks/twelve-mock-data';
 
 const SYMBOLS = [
   { value: 'GBP/JPY', label: 'GBP/JPY', type: 'forex' },
@@ -32,32 +35,33 @@ const TWELVE_DATA_API_KEY = 'b975cb65b1c84a1c82bb0ec9e94eabaa'; // Replace with 
 
 export default function Home() {
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
-  const chartRef = useRef<any>(null);
+  const chartRef = useRef<IChartApi | null>(null);
   const [symbol, setSymbol] = useState('GBP/JPY');
   const [timeframe, setTimeframe] = useState('15min');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchForexData = async (sym: string, tf: string) => {
-    const response = await fetch(
-      `https://api.twelvedata.com/time_series?symbol=${sym}&interval=${tf}&outputsize=100&apikey=${TWELVE_DATA_API_KEY}`
-    );
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch forex data');
-    }
-    
-    const data = await response.json();
-    
-    if (data.status === 'error') {
-      throw new Error(data.message || 'Failed to fetch forex data');
-    }
-    
-    if (!data.values || data.values.length === 0) {
-      throw new Error('No data available for this forex pair');
-    }
-    
-    // Twelve Data returns data in reverse chronological order, so we reverse it
+    const data = TWELVE_MOCK_DATAS as any;
+    // const response = await fetch(
+    //   `https://api.twelvedata.com/time_series?symbol=${sym}&interval=${tf}&outputsize=100&apikey=${TWELVE_DATA_API_KEY}`
+    // );
+
+    // if (!response.ok) {
+    //   throw new Error('Failed to fetch forex data');
+    // }
+
+    // const data = await response.json();
+
+    // if (data.status === 'error') {
+    //   throw new Error(data.message || 'Failed to fetch forex data');
+    // }
+
+    // if (!data.values || data.values.length === 0) {
+    //   throw new Error('No data available for this forex pair');
+    // }
+
+    // // Twelve Data returns data in reverse chronological order, so we reverse it
     return data.values.reverse().map((d: any) => ({
       time: new Date(d.datetime).getTime() / 1000,
       open: parseFloat(d.open),
@@ -73,11 +77,11 @@ export default function Home() {
     try {
       const symbolData = SYMBOLS.find(s => s.value === sym);
       let chartData;
-      
+
       if (symbolData?.type === 'forex') {
         chartData = await fetchForexData(sym, tf);
       }
-      
+
       if (candlestickSeriesRef.current) {
         candlestickSeriesRef.current.setData(chartData);
       }
@@ -98,8 +102,21 @@ export default function Home() {
     const chart = createChart(chartContainer, {
       width: chartContainer.clientWidth,
       height: 600,
+      localization: {
+        timeFormatter: (time: number) => {
+          const date = new Date(time * 1000);
+          return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          });
+        },
+      },
     });
-    
+
     const candlestickSeries = chart.addSeries(CandlestickSeries, {
       upColor: '#26a69a',
       downColor: '#ef5350',
@@ -126,6 +143,49 @@ export default function Home() {
     fetchChartData(symbol, timeframe);
   }, [symbol, timeframe]);
 
+  const handlePredict = async () => {
+    setLoading(true);
+    try {
+      const chartDatas = candlestickSeriesRef.current?.data();
+      if (!chartDatas || chartDatas.length === 0) return;
+      const resp = await analyseChartDatas({
+        metadatas: {
+          chartDatas: JSON.stringify(chartDatas),
+          symbol,
+          timeframe,
+          accountBalance: 1000, // You can replace this with actual account balance if needed
+        }
+      });
+      console.log('Analysis Result:', resp);
+      // You can set the analysis result to state and display it in the UI as needed
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // const handleAnalyze = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const resp = await analyzeImage({
+  //       metadatas: {
+  //         imageUrl: 'https://example.com/chart.png',
+  //         accountBalance: 100,
+  //         symbol: 'GBP/USD',
+  //         timeframe: '1h',
+  //       }
+  //     });
+  //     setAnalysisResult(resp.json);
+  //     setResult(resp.text);
+  //   } catch (error) {
+  //     console.error('Error:', error);
+  //     setResult('Error analyzing image');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   return (
     <Box minH="100vh" bg="gray.900" py={8} px={4}>
       <Container maxW="container.xl">
@@ -134,7 +194,9 @@ export default function Home() {
             <NativeSelectRoot width="200px">
               <NativeSelectField
                 value={symbol}
-                onChange={(e) => setSymbol(e.target.value)}
+                onChange={(e) => {
+                  setSymbol(e.target.value);
+                }}
                 bg="gray.800"
                 color="white"
                 borderColor="gray.600"
@@ -151,7 +213,9 @@ export default function Home() {
             <NativeSelectRoot width="200px">
               <NativeSelectField
                 value={timeframe}
-                onChange={(e) => setTimeframe(e.target.value)}
+                onChange={(e) => {
+                  setTimeframe(e.target.value)
+                }}
                 bg="gray.800"
                 color="white"
                 borderColor="gray.600"
@@ -164,6 +228,9 @@ export default function Home() {
                 ))}
               </NativeSelectField>
             </NativeSelectRoot>
+            <Button onClick={handlePredict}>
+              Make a prediction
+            </Button>
           </HStack>
 
           {error && (

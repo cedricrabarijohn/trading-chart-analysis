@@ -6,42 +6,39 @@ import fs from 'fs';
 import path from 'path';
 import { IAnalysisResult } from './app';
 
-export interface AnalyzeImageRequest {
+export interface AnalyzeChartDatasRequest {
     metadatas: {
-        imageUrl: string;
+        chartDatas: string;
         symbol?: string; // eg : 'GBP/USD'
         timeframe?: string; // eg : '1h'
         accountBalance?: number; // eg : 1000
     }
 }
 
-export interface AnalyzeImageResponse {
+export interface AnalyzeChartDatasResponse {
     text: string;
-    json: IAnalysisResult;
+    // json: IAnalysisResult;
 }
 
-export async function analyzeImage(params: AnalyzeImageRequest): Promise<AnalyzeImageResponse> {
+export async function analyseChartDatas(params: AnalyzeChartDatasRequest): Promise<AnalyzeChartDatasResponse> {
     const defaultTimeFrame = '15mn';
     // Read the prompt from the PROMPT.MD file
     const promptPath = path.join(process.cwd(), 'docs', 'PROMPT.MD');
     const promptText = fs.readFileSync(promptPath, 'utf-8');
 
+    const chartDatas = params.metadatas.chartDatas ? JSON.parse(params.metadatas.chartDatas) : null;
     const timeframe = params.metadatas?.timeframe || defaultTimeFrame;
     const symbol = params.metadatas?.symbol || 'Unknown Symbol';
     const accountBalance = params.metadatas?.accountBalance || 0;
     const date = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     const riskPerTrade = 2;
-    
+
     const promptWithContext = promptText
         .replace('${timeframe}', timeframe)
         .replace('${symbol}', symbol)
         .replace('${accountBalance}', accountBalance.toString())
         .replace('${date}', date)
         .replace('${riskPerTrade}', riskPerTrade.toString());
-    
-    // Log image data info for debugging
-    console.log('Image data start:', params.metadatas?.imageUrl?.substring(0, 100));
-    console.log('Image data length:', params.metadatas?.imageUrl?.length);
 
     const result = await generateText({
         model: xai.responses('grok-4-1-fast-reasoning'),
@@ -49,36 +46,23 @@ export async function analyzeImage(params: AnalyzeImageRequest): Promise<Analyze
             {
                 role: 'user',
                 content: [
-                    { type: 'image', image: params.metadatas?.imageUrl },
-                    { 
-                        text: `CRITICAL: You must analyze the ACTUAL image I'm sending you. Read the exact current price from the chart display.
-${promptWithContext}
-
-IMPORTANT: 
-- First, identify the EXACT current price shown on the chart (look at price labels on the right side)
-- Do not make up prices - use only what you see in the actual chart
-- Verify your prices match the chart before responding`, 
-                        type: 'text' 
+                    {
+                        text: `ANALYSE the following CHART DATAS and provide me with a trading recommendation (LONG or SHORT) with entry price, stop loss, take profit, confidence percentage, rationale, key support and resistance levels, winrate percentage and risk-reward ratio.
+${chartDatas ? `Here are the chart datas: ${JSON.stringify(chartDatas)}` : 'No chart datas provided.'}`,
+                        type: 'text',
                     },
+                    {
+                        text: promptWithContext,
+                        type: 'text',
+                    }
                 ],
             },
         ],
     });
 
-    console.log('AI Response:', result.text);
+    console.log('AI Response:', result);
 
     return {
-        text: '',
-        json: result.text ? JSON.parse(result.text) : {
-            tradeDirection: 'LONG',
-            entryPrice: 1.2150,
-            confidence: 0.85,
-            rationale: 'The chart shows a strong uptrend with higher highs and higher lows, indicating bullish momentum.',
-            stopLoss: 1.2000,
-            takeProfit: 1.2500,
-            keySupportResistanceLevels: [1.2100, 1.2200, 1.2300],
-            winratePercentage: 75,
-            riskRewardRatio: [1, 2],
-        },
+        text: result.text,
     }
 }

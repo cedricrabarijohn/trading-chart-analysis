@@ -7,5 +7,5 @@ export interface IAnalysisResult {
     takeProfit?: number; // Optional take profit level
     keySupportResistanceLevels?: number[]; // Optional key support/resistance levels
     winratePercentage?: number; // Optional winrate percentage based on historical data
-    riskRewardRatio?: number[]; // Optional risk-reward ratio based on the analysis
+    riskRewardRatio?: number; // Optional risk-reward ratio based on the analysis
 }

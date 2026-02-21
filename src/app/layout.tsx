@@ -17,7 +17,13 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Chart Analysis",
-  description: "A tool to analyze trading charts using AI.",
+  description: "AI-Powered Trading Insights for Forex Markets",
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icon.svg', type: 'image/svg+xml', sizes: '512x512' },
+    ],
+  },
 };
 
 export default function RootLayout({

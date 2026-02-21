@@ -1,36 +1,188 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Chart Analysis
 
-## Getting Started
+AI-Powered Trading Chart Analysis with real-time forex data visualization and intelligent trade predictions.
 
-First, run the development server:
+## 🚀 Features
+
+- **Real-time Chart Visualization** - Interactive candlestick charts using lightweight-charts
+- **AI-Powered Analysis** - Intelligent trade predictions with entry, stop loss, and take profit levels
+- **Multiple Timeframes** - Support for 1min, 5min, 15min, 1h, 4h, and 1day intervals
+- **Forex Pairs** - XAU/USD, GBP/JPY, GBP/USD, EUR/USD
+- **Beautiful UI** - Clean monochromatic design with position-based color coding
+- **Docker Support** - Easy deployment with Docker and docker-compose
+
+## 📋 Prerequisites
+
+- **Docker & Docker Compose** (recommended)
+  - OR **Node.js 20+** and **pnpm** for local development
+- **Twelve Data API Key** - Get one at [twelvedata.com](https://twelvedata.com)
+
+## 🐳 Quick Start with Docker (Recommended)
+
+### 1. Clone and Setup Environment
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Create .env file
+make env
+
+# Edit .env and add your API key
+# NEXT_PUBLIC_TWELVE_DATA_API_KEY=your_api_key_here
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Start Development Server
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Start development server with hot-reload
+make dev
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Or start in detached mode
+make up
+```
 
-## Learn More
+The app will be available at [http://localhost:3000](http://localhost:3000)
 
-To learn more about Next.js, take a look at the following resources:
+### 3. Other Docker Commands
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# View logs
+make logs
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Restart container
+make restart
 
-## Deploy on Vercel
+# Stop container
+make down
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Build and run production
+make prod-build
+make prod-up
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Access container shell
+make shell
+
+# Clean everything
+make clean
+```
+
+## 💻 Local Development (Without Docker)
+
+### Install Dependencies
+
+```bash
+pnpm install
+```
+
+### Run Development Server
+
+```bash
+pnpm dev
+```
+
+### Build for Production
+
+```bash
+pnpm build
+pnpm start
+```
+
+## 🛠️ Available Make Commands
+
+Run `make help` to see all available commands:
+
+| Command | Description |
+|---------|-------------|
+| `make dev` | Start development server with hot-reload |
+| `make up` | Start development container (detached) |
+| `make down` | Stop development container |
+| `make restart` | Restart development container |
+| `make logs` | View container logs |
+| `make prod-build` | Build production Docker image |
+| `make prod-up` | Start production container |
+| `make prod-down` | Stop production container |
+| `make install` | Install dependencies locally |
+| `make build` | Build Next.js app locally |
+| `make lint` | Run linter |
+| `make clean` | Clean all build artifacts |
+| `make shell` | Open shell in dev container |
+| `make env` | Create .env from template |
+
+## 📁 Project Structure
+
+```
+chart-analysis/
+├── src/
+│   ├── app/
+│   │   ├── page.tsx           # Main application page
+│   │   ├── actions.ts         # Server actions for AI analysis
+│   │   ├── globals/
+│   │   │   └── mocks/         # Mock data for testing
+│   │   └── api/               # API routes
+│   ├── components/
+│   │   └── ui/                # Reusable UI components
+│   └── lib/                   # Utility functions
+├── public/                    # Static assets
+├── Dockerfile                 # Production Docker configuration
+├── Dockerfile.dev            # Development Docker configuration
+├── docker-compose.yml        # Docker Compose configuration
+├── Makefile                  # Build automation
+└── package.json              # Dependencies
+```
+
+## 🎨 Technology Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **UI Library**: Chakra UI v3
+- **Charts**: Lightweight Charts
+- **AI**: xAI Grok API
+- **Package Manager**: pnpm
+- **Containerization**: Docker & Docker Compose
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Create a `.env` or `.env.local` file:
+
+```env
+NEXT_PUBLIC_TWELVE_DATA_API_KEY=your_twelve_data_api_key
+```
+
+### Docker Configuration
+
+- **Development**: Uses `Dockerfile.dev` with hot-reload and volume mounting
+- **Production**: Uses multi-stage `Dockerfile` with optimized standalone build
+
+## 🚢 Production Deployment
+
+### Build Production Image
+
+```bash
+make prod-build
+```
+
+### Run Production Container
+
+```bash
+make prod-up
+```
+
+The production build is optimized with:
+- Multi-stage Docker build
+- Standalone output mode
+- Non-root user for security
+- Minimal image size
+
+## 📝 Development Notes
+
+- The app uses Server Actions for AI analysis
+- Chart data is fetched from Twelve Data API
+- Real-time chart updates with React hooks
+- Monochromatic design with green (LONG) and red (SHORT) position indicators
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is private and not licensed for public use.

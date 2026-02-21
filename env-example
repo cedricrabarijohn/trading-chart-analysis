@@ -1,1 +1,5 @@
-XAI_API_KEY=your_api_key_here
+# xAI Grok API Key for chart analysis
+XAI_API_KEY=your_xai_api_key_here
+
+# Twelve Data API Key for fetching forex chart data
+NEXT_PUBLIC_TWELVE_DATA_API_KEY=your_twelve_data_api_key_here

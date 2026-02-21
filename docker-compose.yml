@@ -1,0 +1,39 @@
+services:
+  chart-analysis:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chart-analysis-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_TWELVE_DATA_API_KEY=${NEXT_PUBLIC_TWELVE_DATA_API_KEY}
+      - XAI_API_KEY=${XAI_API_KEY}
+    restart: unless-stopped
+    networks:
+      - chart-analysis-network
+
+  chart-analysis-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: chart-analysis-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_TWELVE_DATA_API_KEY=${NEXT_PUBLIC_TWELVE_DATA_API_KEY}
+      - XAI_API_KEY=${XAI_API_KEY}
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    restart: unless-stopped
+    networks:
+      - chart-analysis-network
+
+networks:
+  chart-analysis-network:
+    driver: bridge

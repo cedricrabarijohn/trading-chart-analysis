@@ -12,7 +12,6 @@ import {
 import styles from "./page.module.css";
 import { NativeSelectRoot, NativeSelectField } from "@/components/ui/native-select";
 import { Button } from '@/components/ui/button';
-import { analyseChartDatas } from './actions';
 import { IAnalysisResult } from './app';
 import AnalysisHistory from '@/components/analysis-history/AnalysisHistory';
 import {
@@ -199,14 +198,30 @@ export default function Home() {
         setError('No chart data available. Please wait for data to load.');
         return;
       }
-      const resp = await analyseChartDatas({
-        metadatas: {
-          chartDatas: JSON.stringify(chartDatas),
-          symbol,
-          timeframe,
-          accountBalance: 100000,
-        }
+      
+      // Call the API endpoint instead of server action
+      const response = await fetch('/api/analyze-chart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          metadatas: {
+            chartDatas: JSON.stringify(chartDatas),
+            symbol,
+            timeframe,
+            accountBalance: 100000,
+          }
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to analyze chart');
+      }
+
+      const resp = await response.json();
+      
       if (!resp?.json) {
         setError('Analysis failed. Please try again.');
         return;
@@ -218,7 +233,7 @@ export default function Home() {
       setHistoryKey(prev => prev + 1); // Force history component to refresh
     } catch (error) {
       console.error('Error:', error);
-      setError('An error occurred during analysis. Please try again.');
+      setError(error instanceof Error ? error.message : 'An error occurred during analysis. Please try again.');
     } finally {
       setIsAnalyzing(false);
     }

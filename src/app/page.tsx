@@ -15,6 +15,14 @@ import { NativeSelectRoot, NativeSelectField } from "@/components/ui/native-sele
 import { Button } from '@/components/ui/button';
 import { analyseChartDatas } from './actions';
 import { IAnalysisResult } from './app';
+import AnalysisHistory from '@/components/AnalysisHistory';
+import {
+  savePreferences,
+  loadPreferences,
+  saveAnalysisToHistory,
+  loadAnalysisHistory,
+  type AnalysisHistoryItem,
+} from '@/lib/localStorage';
 
 const SYMBOLS = [
   { value: 'XAU/USD', label: 'XAU/USD', type: 'forex' },
@@ -35,12 +43,28 @@ const TIMEFRAMES = [
 export default function Home() {
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const [symbol, setSymbol] = useState('GBP/JPY');
-  const [timeframe, setTimeframe] = useState('15min');
+  const [symbol, setSymbol] = useState('');
+  const [timeframe, setTimeframe] = useState('');
   const [loading, setLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<IAnalysisResult | null>(null);
+  const [currentAnalysisId, setCurrentAnalysisId] = useState<string | undefined>();
+  const [historyKey, setHistoryKey] = useState(0);
+
+  // Load preferences from localStorage on mount
+  useEffect(() => {
+    const preferences = loadPreferences();
+    if (preferences) {
+      setSymbol(preferences.symbol);
+      setTimeframe(preferences.timeframe);
+    }
+  }, []);
+
+  // Save preferences when they change
+  useEffect(() => {
+    savePreferences({ symbol, timeframe });
+  }, [symbol, timeframe]);
 
   const fetchForexData = async (sym: string, tf: string) => {
     const response = await fetch(
@@ -159,12 +183,14 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (!symbol || !timeframe) return;
     fetchChartData(symbol, timeframe);
   }, [symbol, timeframe]);
 
   // Reset analysis when symbol or timeframe changes
   useEffect(() => {
     setAnalysisResult(null);
+    setCurrentAnalysisId(undefined);
     setError(null);
   }, [symbol, timeframe]);
 
@@ -172,6 +198,7 @@ export default function Home() {
     setIsAnalyzing(true);
     setError(null);
     setAnalysisResult(null);
+    setCurrentAnalysisId(undefined);
     try {
       const chartDatas = candlestickSeriesRef.current?.data();
       if (!chartDatas || chartDatas.length === 0) {
@@ -190,7 +217,15 @@ export default function Home() {
         setError('Analysis failed. Please try again.');
         return;
       }
-      setAnalysisResult(resp.json)
+      setAnalysisResult(resp.json);
+
+      // Save to history
+      saveAnalysisToHistory(symbol, timeframe, resp.json);
+      const history = loadAnalysisHistory();
+      if (history.length > 0) {
+        setCurrentAnalysisId(history[0].id);
+      }
+      setHistoryKey(prev => prev + 1); // Force history component to refresh
     } catch (error) {
       console.error('Error:', error);
       setError('An error occurred during analysis. Please try again.');
@@ -198,6 +233,14 @@ export default function Home() {
       setIsAnalyzing(false);
     }
   }
+
+  const handleLoadAnalysis = (item: AnalysisHistoryItem) => {
+    setSymbol(item.symbol);
+    setTimeframe(item.timeframe);
+    setAnalysisResult(item.result);
+    setCurrentAnalysisId(item.id);
+    setError(null);
+  };
 
   return (
     <Box minH="100vh" bg="#0a0a0a" py={8} px={10} display={'flex'} justifyContent={'center'} className={styles.page}>
@@ -402,16 +445,18 @@ export default function Home() {
             }
             {/* Chart Section */}
             <Box>
-              <HStack justify="space-between" mb={3} px={2}>
-                <Text fontSize="sm" color="#888" fontWeight="600">
-                  {analysisResult ? 'Chart Data' : `${SYMBOLS.find(s => s.value === symbol)?.label} \u2022 ${TIMEFRAMES.find(tf => tf.value === timeframe)?.label}`}
-                </Text>
-                {loading && !analysisResult && (
-                  <Text fontSize="xs" color="#666" fontStyle="italic">
-                    Loading chart data...
+              {(!!symbol && !!timeframe) &&
+                <HStack justify="space-between" mb={3} px={2}>
+                  <Text fontSize="sm" color="#888" fontWeight="600">
+                    {analysisResult ? 'Chart Data' : `${SYMBOLS.find(s => s.value === symbol)?.label} \u2022 ${TIMEFRAMES.find(tf => tf.value === timeframe)?.label}`}
                   </Text>
-                )}
-              </HStack>
+                  {loading && !analysisResult && (
+                    <Text fontSize="xs" color="#666" fontStyle="italic">
+                      Loading chart data...
+                    </Text>
+                  )}
+                </HStack>
+              }
               <Box
                 id="chart-container"
                 bg="#1a1a1a"
@@ -425,6 +470,13 @@ export default function Home() {
           </VStack>
         </VStack>
       </Container>
+
+      {/* Analysis History Panel */}
+      <AnalysisHistory
+        key={historyKey}
+        onLoadAnalysis={handleLoadAnalysis}
+        currentAnalysisId={currentAnalysisId}
+      />
     </Box>
   );
 }

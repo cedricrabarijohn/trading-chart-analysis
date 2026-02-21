@@ -41,7 +41,9 @@ export default function Home() {
   const chartRef = useRef<IChartApi | null>(null);
   const [symbol, setSymbol] = useState('');
   const [timeframe, setTimeframe] = useState('');
+  const [chartData, setChartData] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<IAnalysisResult | null>(null);
@@ -102,14 +104,17 @@ export default function Home() {
     setError(null);
     try {
       const symbolData = SYMBOLS.find(s => s.value === sym);
-      let chartData;
+      let data;
 
       if (symbolData?.type === 'forex') {
-        chartData = await fetchForexData(sym, tf);
+        data = await fetchForexData(sym, tf);
       }
 
+      // Save to state
+      setChartData(data);
+
       if (candlestickSeriesRef.current) {
-        candlestickSeriesRef.current.setData(chartData);
+        candlestickSeriesRef.current.setData(data);
       }
     } catch (err) {
       console.error('Error fetching chart data:', err);
@@ -189,6 +194,14 @@ export default function Home() {
     fetchChartData(symbol, timeframe);
   }, [symbol, timeframe]);
 
+  // Hide initial loading overlay once we have chart data
+  useEffect(() => {
+    if (chartData && chartData.length > 0) {
+      // Add a small delay for smooth transition
+      setInitialLoading(false);
+    }
+  }, [chartData]);
+
   // Reset analysis when symbol or timeframe changes
   useEffect(() => {
     setAnalysisResult(null);
@@ -200,12 +213,11 @@ export default function Home() {
     setError(null);
     setAnalysisResult(null);
     try {
-      const chartDatas = candlestickSeriesRef.current?.data();
-      if (!chartDatas || chartDatas.length === 0) {
+      if (!chartData || chartData.length === 0) {
         setError('No chart data available. Please wait for data to load.');
         return;
       }
-      
+
       // Call the API endpoint instead of server action
       const response = await fetch('/api/analyze-chart', {
         method: 'POST',
@@ -214,7 +226,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           metadatas: {
-            chartDatas: JSON.stringify(chartDatas),
+            chartDatas: JSON.stringify(chartData),
             symbol,
             timeframe,
             accountBalance: 100000,
@@ -228,7 +240,7 @@ export default function Home() {
       }
 
       const resp = await response.json();
-      
+
       if (!resp?.json) {
         setError('Analysis failed. Please try again.');
         return;
@@ -248,6 +260,27 @@ export default function Home() {
 
   return (
     <Box minH="100vh" bg="#0a0a0a" py={8} px={10} display={'flex'} justifyContent={'center'} className={styles.page}>
+      {/* Initial Loading Overlay */}
+      <Box className={`${styles.initialLoadingOverlay} ${!initialLoading ? styles.hideInitialLoadingOverlay : ''}`}>
+        <VStack gap={6} align="center">
+          <Box className={styles.chartIcon}>
+            {/* Animated candlesticks */}
+            <Box className={styles.candlestick} style={{ animationDelay: '0s' }} />
+            <Box className={styles.candlestick} style={{ animationDelay: '0.15s' }} />
+            <Box className={styles.candlestick} style={{ animationDelay: '0.3s' }} />
+            <Box className={styles.candlestick} style={{ animationDelay: '0.45s' }} />
+          </Box>
+          <VStack gap={2}>
+            <Text fontSize="2xl" fontWeight="700" color="white" letterSpacing="-0.02em">
+              Chart Analysis
+            </Text>
+            <Text fontSize="sm" color="#888" className={styles.loadingText}>
+              Loading market data...
+            </Text>
+          </VStack>
+        </VStack>
+      </Box>
+
       <Container maxW="2xl">
         <VStack gap={6} align="stretch">
           <Box textAlign="center" mb={2}>

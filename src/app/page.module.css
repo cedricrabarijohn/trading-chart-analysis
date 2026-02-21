@@ -338,6 +338,79 @@
   }
 }
 
+/* Initial Loading Overlay - Full Screen */
+.initialLoadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease;
+}
+
+.hideInitialLoadingOverlay {
+  opacity: 0;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Animated Chart Icon */
+.chartIcon {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  height: 80px;
+  padding-bottom: 10px;
+}
+
+.candlestick {
+  width: 20px;
+  background: linear-gradient(180deg, var(--green) 0%, var(--green-dark) 100%);
+  border-radius: 4px;
+  animation: candlestickPulse 1.2s ease-in-out infinite;
+  position: relative;
+}
+
+.candlestick:nth-child(1) {
+  height: 40px;
+  background: linear-gradient(180deg, var(--red) 0%, var(--red-dark) 100%);
+}
+
+.candlestick:nth-child(2) {
+  height: 60px;
+  background: linear-gradient(180deg, var(--green) 0%, var(--green-dark) 100%);
+}
+
+.candlestick:nth-child(3) {
+  height: 35px;
+  background: linear-gradient(180deg, var(--red) 0%, var(--red-dark) 100%);
+}
+
+.candlestick:nth-child(4) {
+  height: 70px;
+  background: linear-gradient(180deg, var(--green) 0%, var(--green-dark) 100%);
+}
+
+@keyframes candlestickPulse {
+  0%, 100% {
+    transform: scaleY(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scaleY(0.6);
+    opacity: 1;
+  }
+}
+
+.loadingText {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
 @media (max-width: 768px) {
   .main {
     padding: 32px 16px;

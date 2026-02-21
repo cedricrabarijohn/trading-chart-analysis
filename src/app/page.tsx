@@ -20,8 +20,6 @@ import {
   savePreferences,
   loadPreferences,
   saveAnalysisToHistory,
-  loadAnalysisHistory,
-  type AnalysisHistoryItem,
 } from '@/lib/localStorage';
 
 const SYMBOLS = [
@@ -49,7 +47,6 @@ export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<IAnalysisResult | null>(null);
-  const [currentAnalysisId, setCurrentAnalysisId] = useState<string | undefined>();
   const [historyKey, setHistoryKey] = useState(0);
 
   // Load preferences from localStorage on mount
@@ -190,7 +187,6 @@ export default function Home() {
   // Reset analysis when symbol or timeframe changes
   useEffect(() => {
     setAnalysisResult(null);
-    setCurrentAnalysisId(undefined);
     setError(null);
   }, [symbol, timeframe]);
 
@@ -198,7 +194,6 @@ export default function Home() {
     setIsAnalyzing(true);
     setError(null);
     setAnalysisResult(null);
-    setCurrentAnalysisId(undefined);
     try {
       const chartDatas = candlestickSeriesRef.current?.data();
       if (!chartDatas || chartDatas.length === 0) {
@@ -221,10 +216,6 @@ export default function Home() {
 
       // Save to history
       saveAnalysisToHistory(symbol, timeframe, resp.json);
-      const history = loadAnalysisHistory();
-      if (history.length > 0) {
-        setCurrentAnalysisId(history[0].id);
-      }
       setHistoryKey(prev => prev + 1); // Force history component to refresh
     } catch (error) {
       console.error('Error:', error);
@@ -233,14 +224,6 @@ export default function Home() {
       setIsAnalyzing(false);
     }
   }
-
-  const handleLoadAnalysis = (item: AnalysisHistoryItem) => {
-    setSymbol(item.symbol);
-    setTimeframe(item.timeframe);
-    setAnalysisResult(item.result);
-    setCurrentAnalysisId(item.id);
-    setError(null);
-  };
 
   return (
     <Box minH="100vh" bg="#0a0a0a" py={8} px={10} display={'flex'} justifyContent={'center'} className={styles.page}>
@@ -336,7 +319,7 @@ export default function Home() {
                       Analysis Results
                     </Text>
                     <Text fontSize="sm" color="#666" mt={1}>
-                      {symbol} • {TIMEFRAMES.find(tf => tf.value === timeframe)?.label} • {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      {symbol} • {TIMEFRAMES.find(tf => tf.value === timeframe)?.label} • {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })} {analysisResult?.currentPriceLevel ? `(Current price at ${analysisResult.currentPriceLevel.toFixed(5)})` : ''}
                     </Text>
                   </Box>
                 </HStack>
@@ -351,8 +334,16 @@ export default function Home() {
                     </div>
 
                     {/* Entry Price, Stop Loss, Take Profit */}
-                    {(analysisResult.entryPrice || analysisResult.stopLoss || analysisResult.takeProfit) && (
+                    {(analysisResult.entryPrice || analysisResult.stopLoss || analysisResult.takeProfit || analysisResult?.currentPriceLevel) && (
                       <div className={styles.priceGrid}>
+                        {/* {analysisResult.currentPriceLevel && (
+                          <div className={styles.priceItem}>
+                            <span className={styles.priceLabel}>Current Price</span>
+                            <span className={styles.priceValue}>
+                              {analysisResult.currentPriceLevel.toFixed(5)}
+                            </span>
+                          </div>
+                        )} */}
                         {analysisResult.entryPrice && (
                           <div className={styles.priceItem}>
                             <span className={styles.priceLabel}>Entry Price</span>
@@ -472,11 +463,7 @@ export default function Home() {
       </Container>
 
       {/* Analysis History Panel */}
-      <AnalysisHistory
-        key={historyKey}
-        onLoadAnalysis={handleLoadAnalysis}
-        currentAnalysisId={currentAnalysisId}
-      />
+      <AnalysisHistory key={historyKey} />
     </Box>
   );
 }

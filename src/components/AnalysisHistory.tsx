@@ -8,16 +8,17 @@ import {
   clearAnalysisHistory,
   AnalysisHistoryItem,
 } from '@/lib/localStorage';
+import AnalysisHistoryModal from './AnalysisHistoryModal';
 import styles from './AnalysisHistory.module.css';
 
 interface AnalysisHistoryProps {
-  onLoadAnalysis: (item: AnalysisHistoryItem) => void;
-  currentAnalysisId?: string;
+  onRefresh?: () => void;
 }
 
-export default function AnalysisHistory({ onLoadAnalysis, currentAnalysisId }: AnalysisHistoryProps) {
+export default function AnalysisHistory({ onRefresh }: AnalysisHistoryProps) {
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<AnalysisHistoryItem | null>(null);
 
   useEffect(() => {
     setHistory(loadAnalysisHistory());
@@ -27,13 +28,21 @@ export default function AnalysisHistory({ onLoadAnalysis, currentAnalysisId }: A
     e.stopPropagation();
     deleteAnalysisFromHistory(id);
     setHistory(loadAnalysisHistory());
+    if (selectedItem?.id === id) {
+      setSelectedItem(null);
+    }
   };
 
   const handleClearAll = () => {
     if (window.confirm('Are you sure you want to clear all analysis history?')) {
       clearAnalysisHistory();
       setHistory([]);
+      setSelectedItem(null);
     }
+  };
+
+  const handleViewAnalysis = (item: AnalysisHistoryItem) => {
+    setSelectedItem(item);
   };
 
   const formatDate = (timestamp: number) => {
@@ -115,24 +124,20 @@ export default function AnalysisHistory({ onLoadAnalysis, currentAnalysisId }: A
               {history.map((item) => (
                 <div
                   key={item.id}
-                  className={`${styles.historyItem} ${currentAnalysisId === item.id ? styles.active : ''}`}
-                  onClick={() => {
-                    onLoadAnalysis(item);
-                    setIsOpen(false);
-                  }}
+                  className={`${styles.historyItem} ${selectedItem?.id === item.id ? styles.active : ''}`}
+                  onClick={() => handleViewAnalysis(item)}
                 >
                   <HStack justify="space-between" align="start" width="100%">
                     <Box flex="1" minWidth="0">
                       <HStack gap={2} mb={1}>
-                        <Text
-                          fontSize="sm"
-                          fontWeight="600"
-                          color="white"
-                          className={styles.symbol}
-                        >
+                        <Text fontSize="sm" fontWeight="600" color="white" className={styles.symbol}>
                           {item.symbol}
                         </Text>
-                        <span className={`${styles.directionBadge} ${item.result.tradeDirection === 'LONG' ? styles.long : styles.short}`}>
+                        <span
+                          className={`${styles.directionBadge} ${
+                            item.result.tradeDirection === 'LONG' ? styles.long : styles.short
+                          }`}
+                        >
                           {item.result.tradeDirection}
                         </span>
                       </HStack>
@@ -170,6 +175,11 @@ export default function AnalysisHistory({ onLoadAnalysis, currentAnalysisId }: A
 
       {/* Overlay */}
       {isOpen && <div className={styles.overlay} onClick={() => setIsOpen(false)} />}
+
+      {/* Analysis Modal */}
+      {selectedItem && (
+        <AnalysisHistoryModal item={selectedItem} onClose={() => setSelectedItem(null)} />
+      )}
     </>
   );
 }

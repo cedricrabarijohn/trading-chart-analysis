@@ -53,12 +53,19 @@ export default function Home() {
     if (preferences) {
       setSymbol(preferences.symbol);
       setTimeframe(preferences.timeframe);
+    } else {
+      // Set default values for first-time users
+      setSymbol(SYMBOLS[1].value);
+      setTimeframe(TIMEFRAMES[2].value);
     }
   }, []);
 
   // Save preferences when they change
   useEffect(() => {
-    savePreferences({ symbol, timeframe });
+    // Only save if both values are set
+    if (symbol && timeframe) {
+      savePreferences({ symbol, timeframe });
+    }
   }, [symbol, timeframe]);
 
   const fetchForexData = async (sym: string, tf: string) => {

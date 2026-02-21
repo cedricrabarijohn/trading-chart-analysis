@@ -27,6 +27,7 @@ interface NativeSelectItem {
 }
 
 interface NativeSelectFieldProps extends Select.FieldProps {
+  disabled?: boolean,
   items?: Array<string | NativeSelectItem>
 }
 

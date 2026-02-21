@@ -227,12 +227,10 @@ export default function Home() {
                 borderColor="#2a2a2a"
                 padding={'2px 2px 2px 10px'}
                 _hover={{ bg: '#252525', borderColor: '#404040' }}
+                disabled={isAnalyzing}
+                opacity={isAnalyzing ? 0.5 : 1}
+                items={SYMBOLS}
               >
-                {SYMBOLS.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
               </NativeSelectField>
             </NativeSelectRoot>
 
@@ -247,12 +245,10 @@ export default function Home() {
                 borderColor="#2a2a2a"
                 padding={'2px 2px 2px 10px'}
                 _hover={{ bg: '#252525', borderColor: '#404040' }}
+                disabled={isAnalyzing}
+                opacity={isAnalyzing ? 0.5 : 1}
+                items={TIMEFRAMES}
               >
-                {TIMEFRAMES.map((tf) => (
-                  <option key={tf.value} value={tf.value}>
-                    {tf.label}
-                  </option>
-                ))}
               </NativeSelectField>
             </NativeSelectRoot>
             <Button

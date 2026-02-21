@@ -10,6 +10,26 @@ AI-Powered Trading Chart Analysis with real-time forex data visualization and in
 - **Forex Pairs** - XAU/USD, GBP/JPY, GBP/USD, EUR/USD
 - **Beautiful UI** - Clean monochromatic design with position-based color coding
 - **Docker Support** - Easy deployment with Docker and docker-compose
+- **User Preferences** - Automatically saves preferences and analysis history in localStorage
+- **Analysis History** - Browse past analyses with modal view
+- **SEO Optimized** - Comprehensive metadata, structured data, and social sharing support
+
+## 🔍 SEO Features
+
+The app is fully optimized for search engines and social sharing:
+
+- **Comprehensive Metadata**: Title, description, keywords, and Open Graph tags
+- **Structured Data**: JSON-LD schema for WebApplication
+- **Sitemap**: Auto-generated sitemap at `/sitemap.xml`
+- **Robots.txt**: Configured for proper crawling
+- **PWA Support**: Web app manifest for installability
+- **Social Media Cards**: Auto-generated Open Graph images for Twitter, Facebook, LinkedIn
+- **Semantic HTML**: Proper heading hierarchy and ARIA labels
+- **Mobile Optimized**: Responsive meta viewport settings
+
+To customize for your domain, update the `baseUrl` in:
+- `src/app/layout.tsx` (metadata.openGraph.url and alternates.canonical)
+- `src/app/sitemap.ts` (baseUrl constant)
 
 ## 📋 Prerequisites
 

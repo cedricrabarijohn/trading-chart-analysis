@@ -1,0 +1,9 @@
+# robots.txt for Chart Analysis
+User-agent: *
+Allow: /
+
+# Disallow API routes
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://trading-chart-analysis.vercel.app/sitemap.xml

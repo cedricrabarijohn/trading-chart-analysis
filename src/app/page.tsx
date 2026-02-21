@@ -14,8 +14,6 @@ import styles from "./page.module.css";
 import { NativeSelectRoot, NativeSelectField } from "@/components/ui/native-select";
 import { Button } from '@/components/ui/button';
 import { analyseChartDatas } from './actions';
-import { TWELVE_MOCK_DATAS } from './globals/mocks/twelve-mock-data';
-import { XAI_MOCK_DATAS } from './globals/mocks/xai-mock-datas';
 import { IAnalysisResult } from './app';
 
 const SYMBOLS = [
@@ -45,7 +43,6 @@ export default function Home() {
   const [analysisResult, setAnalysisResult] = useState<IAnalysisResult | null>(null);
 
   const fetchForexData = async (sym: string, tf: string) => {
-    // const data = TWELVE_MOCK_DATAS as any;
     const response = await fetch(
       `https://api.twelvedata.com/time_series?symbol=${sym}&interval=${tf}&timezone=Europe/Moscow&outputsize=1000&apikey=${process.env.NEXT_PUBLIC_TWELVE_DATA_API_KEY}`
     );
@@ -140,11 +137,11 @@ export default function Home() {
     });
 
     const candlestickSeries = chart.addSeries(CandlestickSeries, {
-      upColor: '#ffffff',
-      downColor: '#666666',
+      upColor: '#22c55e',
+      downColor: '#ef4444',
       borderVisible: false,
-      wickUpColor: '#ffffff',
-      wickDownColor: '#666666',
+      wickUpColor: '#22c55e',
+      wickDownColor: '#ef4444',
     });
 
     chartRef.current = chart;
@@ -186,7 +183,7 @@ export default function Home() {
           chartDatas: JSON.stringify(chartDatas),
           symbol,
           timeframe,
-          accountBalance: 100000, // You can replace this with actual account balance if needed
+          accountBalance: 100000,
         }
       });
       if (!resp?.json) {
@@ -206,7 +203,6 @@ export default function Home() {
     <Box minH="100vh" bg="#0a0a0a" py={8} px={10} display={'flex'} justifyContent={'center'} className={styles.page}>
       <Container maxW="2xl">
         <VStack gap={6} align="stretch">
-          {/* Header Section */}
           <Box textAlign="center" mb={2}>
             <Text fontSize="3xl" fontWeight="700" color="white" letterSpacing="-0.02em" mb={2}>
               Chart Analysis
@@ -265,16 +261,13 @@ export default function Home() {
             </Button>
           </HStack>
 
-          {/* Status Messages */}
           {error && (
             <Box bg="rgba(255, 255, 255, 0.05)" color="#888" p={4} borderRadius="8px" border="1px solid #2a2a2a">
               <Text>{error}</Text>
             </Box>
           )}
 
-          {/* Chart and Results Container - Use order to control display */}
           <VStack gap={6} align="stretch" display="flex" flexDirection="column">
-            {/* Loading State for Analysis */}
             {isAnalyzing && (
               <Box className={styles.loadingOverlay}>
                 <VStack gap={4} align="center">

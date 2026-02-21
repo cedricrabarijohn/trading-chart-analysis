@@ -1,8 +1,8 @@
 'use client';
 
-import { Box, HStack, VStack, Text } from '@chakra-ui/react';
+import { Box, HStack, Text } from '@chakra-ui/react';
 import { AnalysisHistoryItem } from '@/lib/localStorage';
-import styles from '../app/page.module.css';
+import styles from '../../app/page.module.css';
 import modalStyles from './AnalysisHistoryModal.module.css';
 
 interface AnalysisHistoryModalProps {

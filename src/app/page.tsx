@@ -14,7 +14,7 @@ import { NativeSelectRoot, NativeSelectField } from "@/components/ui/native-sele
 import { Button } from '@/components/ui/button';
 import { analyseChartDatas } from './actions';
 import { IAnalysisResult } from './app';
-import AnalysisHistory from '@/components/AnalysisHistory';
+import AnalysisHistory from '@/components/analysis-history/AnalysisHistory';
 import {
   savePreferences,
   loadPreferences,

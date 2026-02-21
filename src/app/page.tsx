@@ -8,7 +8,6 @@ import {
   VStack,
   HStack,
   Text,
-  Card,
 } from "@chakra-ui/react";
 import styles from "./page.module.css";
 import { NativeSelectRoot, NativeSelectField } from "@/components/ui/native-select";

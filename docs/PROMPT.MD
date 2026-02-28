@@ -16,4 +16,3 @@ Market: OPEN
 Be direct and specific. Provide exact price levels and position sizing based on proper risk management (max ${riskPerTrade}$% risk per trade).
 
 Answer in JSON format : tradeDirection (LONG / SHORT), entryPrice(number), confidence(number, between 0 & 1), rationale (string, Explanation of the analysis), stopLoss(number), takeProfit(number), keySupportResistanceLevels (array of numbers), winratePercentage(number), riskRewardRatio(number), currentPriceLevel (number)
-Only give me 90%+ winrate setups. You can

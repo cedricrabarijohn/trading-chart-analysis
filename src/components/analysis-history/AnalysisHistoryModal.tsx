@@ -4,6 +4,8 @@ import { Box, HStack, Text } from '@chakra-ui/react';
 import { AnalysisHistoryItem } from '@/lib/localStorage';
 import styles from '../../app/page.module.css';
 import modalStyles from './AnalysisHistoryModal.module.css';
+import { useEffect, useRef } from 'react';
+import { CandlestickData, CandlestickSeries, Time } from 'lightweight-charts';
 
 interface AnalysisHistoryModalProps {
   item: AnalysisHistoryItem;
@@ -11,6 +13,89 @@ interface AnalysisHistoryModalProps {
 }
 
 export default function AnalysisHistoryModal({ item, onClose }: AnalysisHistoryModalProps) {
+  // Chart rendering
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartInstanceRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!item.chartData || !Array.isArray(item.chartData) || item.chartData.length === 0) return;
+    // if (!chartContainerRef.current) return;
+
+    // Dynamically import lightweight-charts for client-side rendering
+    import('lightweight-charts').then((lw) => {
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.remove();
+        chartInstanceRef.current = null;
+      }
+      const chartContainer = document.getElementById('history-chart-container');
+      if (!chartContainer) return;
+      const chart = lw.createChart(chartContainer, {
+        width: chartContainer.clientWidth || 500,
+        height: 300,
+        layout: {
+          background: { color: 'transparent' },
+          textColor: 'white',
+          fontSize: 13,
+        },
+        grid: {
+          horzLines: { color: '#d3d3d333' },
+          vertLines: { color: '#d3d3d333' },
+        },
+        localization: {
+          priceFormatter: (price: number) => price.toFixed(5),
+        },
+      });
+      chartInstanceRef.current = chart;
+      const candlestickSeries = chart.addSeries(CandlestickSeries, {
+        upColor: '#22c55e',
+        downColor: '#ef4444',
+        borderVisible: false,
+        wickUpColor: '#22c55e',
+        wickDownColor: '#ef4444',
+      });
+      candlestickSeries.setData(item.chartData as CandlestickData<Time>[]);
+
+      // Add price lines if present
+      if (item.result.entryPrice) {
+        candlestickSeries.createPriceLine({
+          price: item.result.entryPrice,
+          color: '#3b82f6',
+          lineWidth: 2,
+          lineStyle: 0,
+          axisLabelVisible: true,
+          title: 'Entry Price',
+        });
+      }
+      if (item.result.takeProfit) {
+        candlestickSeries.createPriceLine({
+          price: item.result.takeProfit,
+          color: '#22c55e',
+          lineWidth: 2,
+          lineStyle: 2,
+          axisLabelVisible: true,
+          title: 'Take Profit',
+        });
+      }
+      if (item.result.stopLoss) {
+        candlestickSeries.createPriceLine({
+          price: item.result.stopLoss,
+          color: '#ef4444',
+          lineWidth: 2,
+          lineStyle: 2,
+          axisLabelVisible: true,
+          title: 'Stop Loss',
+        });
+      }
+    });
+
+    // Cleanup chart on unmount
+    return () => {
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.remove();
+        chartInstanceRef.current = null;
+      }
+    };
+  }, [item.chartData, item.result.entryPrice, item.result.takeProfit, item.result.stopLoss]);
   const analysisResult = item.result;
   const TIMEFRAMES = [
     { value: '1min', label: '1 Minute' },
@@ -47,9 +132,8 @@ export default function AnalysisHistoryModal({ item, onClose }: AnalysisHistoryM
                 {item.symbol}
               </Text>
               <span
-                className={`${modalStyles.badge} ${
-                  analysisResult.tradeDirection === 'LONG' ? modalStyles.long : modalStyles.short
-                }`}
+                className={`${modalStyles.badge} ${analysisResult.tradeDirection === 'LONG' ? modalStyles.long : modalStyles.short
+                  }`}
               >
                 {analysisResult.tradeDirection}
               </span>
@@ -68,12 +152,21 @@ export default function AnalysisHistoryModal({ item, onClose }: AnalysisHistoryM
 
         {/* Content */}
         <div className={modalStyles.modalContent}>
+          {/* Chart Visualization */}
+          {item.chartData && Array.isArray(item.chartData) && item.chartData.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <div
+                ref={chartContainerRef}
+                id='history-chart-container'
+                style={{ width: '100%', height: 300, background: '#18181b', borderRadius: 12, border: '1px solid #2a2a2a' }}
+              />
+            </div>
+          )}
           <div className={styles.results}>
             {/* Trade Direction Card */}
             <div
-              className={`${styles.card} ${styles.tradeCard} ${
-                analysisResult.tradeDirection === 'LONG' ? styles.long : styles.short
-              }`}
+              className={`${styles.card} ${styles.tradeCard} ${analysisResult.tradeDirection === 'LONG' ? styles.long : styles.short
+                }`}
             >
               <div className={styles.cardHeader}>
                 <h2 className={styles.cardTitle}>Trade Setup</h2>

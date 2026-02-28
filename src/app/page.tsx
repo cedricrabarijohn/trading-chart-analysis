@@ -316,8 +316,8 @@ export default function Home() {
       }
       setAnalysisResult(resp.json);
 
-      // Save to history
-      saveAnalysisToHistory(symbol, timeframe, resp.json);
+      // Save to history (include chartData)
+      saveAnalysisToHistory(symbol, timeframe, resp.json, chartData);
       setHistoryKey(prev => prev + 1); // Force history component to refresh
 
       // Add price lines to chart

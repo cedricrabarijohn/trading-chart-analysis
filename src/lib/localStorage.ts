@@ -11,6 +11,7 @@ export interface AnalysisHistoryItem {
   symbol: string;
   timeframe: string;
   result: any; // The full analysis result
+  chartData?: any[]; // Chart data for visualization
 }
 
 const PREFERENCES_KEY = 'chart-analysis-preferences';
@@ -45,7 +46,8 @@ export const loadPreferences = (): UserPreferences | null => {
 export const saveAnalysisToHistory = (
   symbol: string,
   timeframe: string,
-  result: any
+  result: any,
+  chartData?: any[]
 ): void => {
   if (typeof window !== 'undefined') {
     try {
@@ -56,6 +58,7 @@ export const saveAnalysisToHistory = (
         symbol,
         timeframe,
         result,
+        chartData,
       };
 
       // Add to beginning and limit to MAX_HISTORY_ITEMS

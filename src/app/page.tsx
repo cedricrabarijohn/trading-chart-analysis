@@ -484,6 +484,53 @@ export default function Home() {
               </Box>
             )}
 
+            {/* Chart Section */}
+            <Box>
+              {(!!symbol && !!timeframe) &&
+                <HStack justify="space-between" mb={3} px={2}>
+                  <Text fontSize="sm" color="#888" fontWeight="600">
+                    {analysisResult ? 'Chart Data' : `${SYMBOLS.find(s => s.value === symbol)?.label} \u2022 ${TIMEFRAMES.find(tf => tf.value === timeframe)?.label}`}
+                  </Text>
+                  {loading && !analysisResult && (
+                    <Text fontSize="xs" color="#666" fontStyle="italic">
+                      Loading chart data...
+                    </Text>
+                  )}
+                </HStack>
+              }
+              <Box
+                id="chart-container"
+                className={styles.chartContainer}
+                bg="#1a1a1a"
+                borderRadius="12px"
+                position="relative"
+                opacity={loading ? 0.5 : 1}
+                transition="opacity 0.2s"
+                border="1px solid #2a2a2a"
+              >
+                <button
+                  onClick={toggleFullscreen}
+                  className={styles.fullscreenBtn}
+                  title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                >
+                  {isFullscreen ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="4 14 10 14 10 20" />
+                      <polyline points="20 10 14 10 14 4" />
+                      <line x1="10" y1="14" x2="3" y2="21" />
+                      <line x1="21" y1="3" x2="14" y2="10" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="15 3 21 3 21 9" />
+                      <polyline points="9 21 3 21 3 15" />
+                      <line x1="21" y1="3" x2="14" y2="10" />
+                      <line x1="3" y1="21" x2="10" y2="14" />
+                    </svg>
+                  )}
+                </button>
+              </Box>
+            </Box>
             {/* Analysis Results */}
             {analysisResult && !isAnalyzing && (
               <Box>
@@ -608,53 +655,6 @@ export default function Home() {
                 </div>
               </Box>)
             }
-            {/* Chart Section */}
-            <Box>
-              {(!!symbol && !!timeframe) &&
-                <HStack justify="space-between" mb={3} px={2}>
-                  <Text fontSize="sm" color="#888" fontWeight="600">
-                    {analysisResult ? 'Chart Data' : `${SYMBOLS.find(s => s.value === symbol)?.label} \u2022 ${TIMEFRAMES.find(tf => tf.value === timeframe)?.label}`}
-                  </Text>
-                  {loading && !analysisResult && (
-                    <Text fontSize="xs" color="#666" fontStyle="italic">
-                      Loading chart data...
-                    </Text>
-                  )}
-                </HStack>
-              }
-              <Box
-                id="chart-container"
-                className={styles.chartContainer}
-                bg="#1a1a1a"
-                borderRadius="12px"
-                position="relative"
-                opacity={loading ? 0.5 : 1}
-                transition="opacity 0.2s"
-                border="1px solid #2a2a2a"
-              >
-                <button
-                  onClick={toggleFullscreen}
-                  className={styles.fullscreenBtn}
-                  title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                >
-                  {isFullscreen ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="4 14 10 14 10 20" />
-                      <polyline points="20 10 14 10 14 4" />
-                      <line x1="10" y1="14" x2="3" y2="21" />
-                      <line x1="21" y1="3" x2="14" y2="10" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="15 3 21 3 21 9" />
-                      <polyline points="9 21 3 21 3 15" />
-                      <line x1="21" y1="3" x2="14" y2="10" />
-                      <line x1="3" y1="21" x2="10" y2="14" />
-                    </svg>
-                  )}
-                </button>
-              </Box>
-            </Box>
           </VStack>
         </VStack>
       </Container>

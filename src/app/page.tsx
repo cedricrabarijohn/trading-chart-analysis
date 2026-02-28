@@ -25,6 +25,7 @@ const SYMBOLS = [
   { value: 'GBP/JPY', label: 'GBP/JPY', type: 'forex' },
   { value: 'GBP/USD', label: 'GBP/USD', type: 'forex' },
   { value: 'EUR/USD', label: 'EUR/USD', type: 'forex' },
+  { value: 'BTC/USD', label: 'BTC/USD', type: 'forex' },
 ];
 
 const TIMEFRAMES = [
@@ -48,6 +49,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<IAnalysisResult | null>(null);
   const [historyKey, setHistoryKey] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Load preferences from localStorage on mount
   useEffect(() => {
@@ -207,6 +209,33 @@ export default function Home() {
     setAnalysisResult(null);
     setError(null);
   }, [symbol, timeframe]);
+
+  // Fullscreen toggle
+  const toggleFullscreen = () => {
+    const container = document.getElementById('chart-container');
+    if (!container) return;
+    if (!document.fullscreenElement) {
+      container.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isFull = !!document.fullscreenElement;
+      setIsFullscreen(isFull);
+      const container = document.getElementById('chart-container');
+      if (chartRef.current && container) {
+        chartRef.current.applyOptions({
+          width: container.clientWidth,
+          height: isFull ? window.innerHeight : 600,
+        });
+      }
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   const handlePredict = async () => {
     setIsAnalyzing(true);
@@ -504,13 +533,36 @@ export default function Home() {
               }
               <Box
                 id="chart-container"
+                className={styles.chartContainer}
                 bg="#1a1a1a"
                 borderRadius="12px"
                 position="relative"
                 opacity={loading ? 0.5 : 1}
                 transition="opacity 0.2s"
                 border="1px solid #2a2a2a"
-              />
+              >
+                <button
+                  onClick={toggleFullscreen}
+                  className={styles.fullscreenBtn}
+                  title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                >
+                  {isFullscreen ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="4 14 10 14 10 20" />
+                      <polyline points="20 10 14 10 14 4" />
+                      <line x1="10" y1="14" x2="3" y2="21" />
+                      <line x1="21" y1="3" x2="14" y2="10" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="15 3 21 3 21 9" />
+                      <polyline points="9 21 3 21 3 15" />
+                      <line x1="21" y1="3" x2="14" y2="10" />
+                      <line x1="3" y1="21" x2="10" y2="14" />
+                    </svg>
+                  )}
+                </button>
+              </Box>
             </Box>
           </VStack>
         </VStack>

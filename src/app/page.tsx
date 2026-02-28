@@ -41,6 +41,10 @@ export default function Home() {
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const areaSeriesRef = useRef<ISeriesApi<"Area"> | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  // Price line refs
+  const entryPriceLineRef = useRef<any>(null);
+  const takeProfitLineRef = useRef<any>(null);
+  const stopLossLineRef = useRef<any>(null);
   const [symbol, setSymbol] = useState('');
   const [timeframe, setTimeframe] = useState('');
   const [chartData, setChartData] = useState<any[] | null>(null);
@@ -229,6 +233,21 @@ export default function Home() {
   useEffect(() => {
     setAnalysisResult(null);
     setError(null);
+    // Remove price lines
+    if (candlestickSeriesRef.current) {
+      if (entryPriceLineRef.current) {
+        candlestickSeriesRef.current.removePriceLine(entryPriceLineRef.current);
+        entryPriceLineRef.current = null;
+      }
+      if (takeProfitLineRef.current) {
+        candlestickSeriesRef.current.removePriceLine(takeProfitLineRef.current);
+        takeProfitLineRef.current = null;
+      }
+      if (stopLossLineRef.current) {
+        candlestickSeriesRef.current.removePriceLine(stopLossLineRef.current);
+        stopLossLineRef.current = null;
+      }
+    }
   }, [symbol, timeframe]);
 
   // Fullscreen toggle
@@ -300,6 +319,57 @@ export default function Home() {
       // Save to history
       saveAnalysisToHistory(symbol, timeframe, resp.json);
       setHistoryKey(prev => prev + 1); // Force history component to refresh
+
+      // Add price lines to chart
+      if (candlestickSeriesRef.current) {
+        // Remove previous price lines
+        if (entryPriceLineRef.current) {
+          candlestickSeriesRef.current.removePriceLine(entryPriceLineRef.current);
+          entryPriceLineRef.current = null;
+        }
+        if (takeProfitLineRef.current) {
+          candlestickSeriesRef.current.removePriceLine(takeProfitLineRef.current);
+          takeProfitLineRef.current = null;
+        }
+        if (stopLossLineRef.current) {
+          candlestickSeriesRef.current.removePriceLine(stopLossLineRef.current);
+          stopLossLineRef.current = null;
+        }
+
+        // Entry Price
+        if (resp.json.entryPrice) {
+          entryPriceLineRef.current = candlestickSeriesRef.current.createPriceLine({
+            price: resp.json.entryPrice,
+            color: '#3b82f6',
+            lineWidth: 2,
+            lineStyle: 0,
+            axisLabelVisible: true,
+            title: 'Entry Price',
+          });
+        }
+        // Take Profit
+        if (resp.json.takeProfit) {
+          takeProfitLineRef.current = candlestickSeriesRef.current.createPriceLine({
+            price: resp.json.takeProfit,
+            color: '#22c55e',
+            lineWidth: 2,
+            lineStyle: 2,
+            axisLabelVisible: true,
+            title: 'Take Profit',
+          });
+        }
+        // Stop Loss
+        if (resp.json.stopLoss) {
+          stopLossLineRef.current = candlestickSeriesRef.current.createPriceLine({
+            price: resp.json.stopLoss,
+            color: '#ef4444',
+            lineWidth: 2,
+            lineStyle: 2,
+            axisLabelVisible: true,
+            title: 'Stop Loss',
+          });
+        }
+      }
     } catch (error) {
       console.error('Error:', error);
       setError(error instanceof Error ? error.message : 'An error occurred during analysis. Please try again.');

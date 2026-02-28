@@ -1,6 +1,6 @@
 'use client';
 
-import { CandlestickSeries, createChart, IChartApi, ISeriesApi } from 'lightweight-charts';
+import { CandlestickSeries, createChart, CrosshairMode, IChartApi, ISeriesApi } from 'lightweight-charts';
 import { useEffect, useRef, useState } from "react";
 import {
   Box,
@@ -135,6 +135,9 @@ export default function Home() {
     const chart = createChart(chartContainer, {
       width: chartContainer.clientWidth,
       height: 600,
+      crosshair: {
+        mode: CrosshairMode.Normal
+      },
       layout: {
         background: {
           color: 'transparent'

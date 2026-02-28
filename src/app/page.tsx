@@ -1,6 +1,6 @@
 'use client';
 
-import { CandlestickSeries, createChart, CrosshairMode, IChartApi, ISeriesApi } from 'lightweight-charts';
+import { AreaSeries, CandlestickSeries, createChart, CrosshairMode, IChartApi, ISeriesApi } from 'lightweight-charts';
 import { useEffect, useRef, useState } from "react";
 import {
   Box,
@@ -39,6 +39,7 @@ const TIMEFRAMES = [
 
 export default function Home() {
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const areaSeriesRef = useRef<ISeriesApi<"Area"> | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const [symbol, setSymbol] = useState('');
   const [timeframe, setTimeframe] = useState('');
@@ -115,6 +116,13 @@ export default function Home() {
       // Save to state
       setChartData(data);
 
+      if (areaSeriesRef.current) {
+        const areaData = data.map((d: any) => ({
+          time: d.time,
+          value: (d.open + d.close) / 2,
+        }));
+        areaSeriesRef.current.setData(areaData);
+      }
       if (candlestickSeriesRef.current) {
         candlestickSeriesRef.current.setData(data);
       }
@@ -172,6 +180,15 @@ export default function Home() {
       },
     });
 
+    // Add area series first so it renders below the candlesticks
+    const areaSeries = chart.addSeries(AreaSeries, {
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+      lineColor: 'transparent',
+      topColor: 'rgba(56, 33, 110, 0.6)',
+      bottomColor: 'rgba(56, 33, 110, 0.1)',
+    });
+
     const candlestickSeries = chart.addSeries(CandlestickSeries, {
       upColor: '#22c55e',
       downColor: '#ef4444',
@@ -181,6 +198,7 @@ export default function Home() {
     });
 
     chartRef.current = chart;
+    areaSeriesRef.current = areaSeries;
     candlestickSeriesRef.current = candlestickSeries;
 
     const handleResize = () => {

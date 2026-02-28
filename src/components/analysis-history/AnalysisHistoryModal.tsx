@@ -117,6 +117,20 @@ export default function AnalysisHistoryModal({ item, onClose }: AnalysisHistoryM
     });
   };
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (!chartContainerRef.current || !chartInstanceRef.current) return;
+      chartInstanceRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (!chartContainerRef.current || !chartInstanceRef.current) return;
+      chartInstanceRef.current.remove();
+    };
+  }, []);
+
   return (
     <>
       {/* Overlay */}
